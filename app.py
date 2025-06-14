@@ -1,47 +1,71 @@
 import streamlit as st
 import math
 
-st.set_page_config(page_title="Scientific Calculator", layout="centered")
+# Title
+st.title("Casio Scientific Calculator")
 
-st.title("🔢 Scientific Calculator")
+# Display box
+if "current_input" not in st.session_state:
+    st.session_state.current_input = ""
 
-# Session state to store input
-if "expression" not in st.session_state:
-    st.session_state.expression = ""
+# Button handlers
+def add_input(key):
+    st.session_state.current_input += key
 
-# Function to evaluate the expression safely
-def safe_eval(expr):
+def clear():
+    st.session_state.current_input = ""
+
+def calculate():
     try:
-        expr = expr.replace('^', '**')
-        expr = expr.replace('√', 'math.sqrt')
-        expr = expr.replace('log', 'math.log10')
-        expr = expr.replace('sin', 'math.sin(math.radians')
-        expr = expr.replace('cos', 'math.cos(math.radians')
-        expr = expr.replace('tan', 'math.tan(math.radians')
-        return eval(expr + (')' if 'radians' in expr else ''))
-    except Exception:
-        return "Error"
+        st.session_state.result = eval(st.session_state.current_input, {"math": math, "__builtins__": {}} )
+        st.session_state.current_input = str(st.session_state.result)
+    except Exception as e:
+        st.error(f"Error: {e}")
 
-# Calculator layout using columns
-buttons = [
-    ['7', '8', '9', '/', 'sin'],
-    ['4', '5', '6', '*', 'cos'],
-    ['1', '2', '3', '-', 'tan'],
-    ['0', '.', '^', '+', 'log'],
-    ['(', ')', '√', 'C', '=']
-]
+# Display
+st.text_input("Expression", st.session_state.current_input, disabled=False, key='input_field')
 
-for row in buttons:
-    cols = st.columns(len(row))
-    for i, btn in enumerate(row):
-        if cols[i].button(btn):
-            if btn == "C":
-                st.session_state.expression = ""
-            elif btn == "=":
-                result = safe_eval(st.session_state.expression)
-                st.session_state.expression = str(result)
-            else:
-                st.session_state.expression += btn
+# Buttons in grid
+cols = st.columns(5)
 
-# Show current expression
-st.text_input("Expression", value=st.session_state.expression, key="display")
+with cols[0]:
+    st.button("7", on_click=add_input, args=('7',))
+    st.button("4", on_click=add_input, args=('4',))
+    st.button("1", on_click=add_input, args=('1',))
+    st.button("0", on_click=add_input, args=('0',))
+
+
+with cols[1]:
+    st.button("8", on_click=add_input, args=('8',))
+    st.button("5", on_click=add_input, args=('5',))
+    st.button("2", on_click=add_input, args=('2',))
+    st.button(".", on_click=add_input, args=('.',))
+
+
+with cols[2]:
+    st.button("9", on_click=add_input, args=('9',))
+    st.button("6", on_click=add_input, args=('6',))
+    st.button("3", on_click=add_input, args=('3',))
+    st.button(")", on_click=add_input, args=(')',))
+
+
+with cols[3]:
+    st.button("/", on_click=add_input, args=('/',))
+    st.button("*", on_click=add_input, args=('*',))
+    st.button("-", on_click=add_input, args=('-',))
+    st.button("+", on_click=add_input, args=('+',))
+
+
+with cols[4]:
+    st.button("C", on_click=clear)
+    st.button("sin(", on_click=add_input, args=('math.sin(',))
+    st.button("cos(", on_click=add_input, args=('math.cos(',))
+    st.button("=", on_click=calculate)
+
+
+# Display result if exists
+if "result" in st.session_state:
+    st.success(f"Result: {st.session_state.result}")
+
+# Footer
+st.write("Casio Scientific Calculator - Streamlit")
